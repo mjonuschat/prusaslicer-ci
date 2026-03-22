@@ -1,0 +1,146 @@
+name: Build Windows
+
+on:
+  workflow_call:
+
+jobs:
+  build_windows:
+    name: Compile
+    runs-on: windows-latest
+    env:
+      date:
+      ver:
+      ver_pure:
+
+    steps:
+      - name: Disable Windows Defender real-time monitoring
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+        shell: pwsh
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          repository: mjonuschat/prusaslicer-ci
+          token: ${{ secrets.CI_REPO_TOKEN }}
+          path: .ci
+
+      - name: Setup GitHub environment
+        run: |
+          $date = Get-Date -Format 'yyyyMMdd'
+          $ref = "${{ github.ref }}"
+          $eventName = "${{ github.event_name }}"
+          $prNumber = "${{ github.event.number }}"
+          $versionContent = Get-Content version.inc -Raw
+          if ($versionContent -match 'set\(SLIC3R_VERSION "(.*?)"\)') {
+              $ver_pure = $matches[1]
+          }
+          if ($eventName -eq 'pull_request') {
+              $ver = "PR" + $prNumber
+          } else {
+              $ver=$ver_pure + "+BOSS"
+          }
+
+          echo "ver=$ver" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "ver_pure=$ver_pure" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "date=$date" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "date: $date version: $ver"
+        shell: pwsh
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31'
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Strawberry Perl
+        run: |
+            choco install strawberryperl
+        shell: pwsh
+
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup
+        shell: pwsh
+
+      - name: Determine Cache Keys
+        id: cache-keys
+        run: |
+          echo cache-path=${{ github.workspace }}/deps/build/destdir >> $ENV:GITHUB_OUTPUT
+          echo cache-key=${{ runner.os }}-deps-${{ hashFiles('deps/**/CMakeLists.txt', 'deps/**/*.cmake', 'deps/**/*.patch') }} >> $ENV:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Cache build dependencies
+        id: cache-build-deps
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.cache-keys.outputs.cache-path }}
+          key: ${{ steps.cache-keys.outputs.cache-key }}
+
+      - name: Build PrusaSlicer (BOSS) Dependencies
+        if: steps.cache-build-deps.outputs.cache-hit != 'true'
+        working-directory: ${{ github.workspace }}
+        run: |
+          cmake -P build.cmake -- --target deps
+        shell: pwsh
+
+      - name: Build PrusaSlicer (BOSS)
+        working-directory: ${{ github.workspace }}
+        run: |
+          cmake -P build.cmake -- --target slicer
+        shell: pwsh
+
+      - name: Provide Mesa software OpenGL fallback
+        working-directory: ${{ github.workspace }}/build/src
+        run: |
+          mkdir mesa
+          curl -L -o mesa.7z https://download.qt.io/development_releases/prebuilt/llvmpipe/windows/opengl32sw-64-mesa_12_0_rc2.7z
+          7z e mesa.7z -omesa opengl32sw.dll
+          move mesa\opengl32sw.dll mesa\opengl32.dll
+          del mesa.7z
+        shell: pwsh
+
+      - name: Resolve VC++ runtime path
+        id: vcrt
+        run: |
+          $crtPath = Get-ChildItem "$env:VCToolsRedistDir\x64\Microsoft.VC*.CRT" -Directory | Select-Object -First 1
+          echo "crt-path=$($crtPath.FullName)" >> $ENV:GITHUB_OUTPUT
+          echo "Resolved VC++ CRT path: $($crtPath.FullName)"
+        shell: pwsh
+
+      - name: Copy VC++ runtime for portable zip
+        working-directory: ${{ github.workspace }}/build/src
+        run: |
+          copy "${{ steps.vcrt.outputs.crt-path }}\vcruntime140.dll" .
+          copy "${{ steps.vcrt.outputs.crt-path }}\vcruntime140_1.dll" .
+          copy "${{ steps.vcrt.outputs.crt-path }}\msvcp140.dll" .
+          copy "${{ steps.vcrt.outputs.crt-path }}\msvcp140_codecvt_ids.dll" .
+        shell: pwsh
+
+      - name: Create installer
+        run: |
+          iscc /DBuildDir="${{ github.workspace }}\build\src" /DVersion="${{ env.ver }}" /DVCRedistCRT="${{ steps.vcrt.outputs.crt-path }}" /DOutputDir="${{ github.workspace }}\build" "${{ github.workspace }}\.ci\.github\scripts\installer.iss"
+        shell: pwsh
+
+      - name: Pack portable app
+        working-directory: ${{ github.workspace }}/build/src
+        run: |
+          7z a -tzip ${{ github.workspace }}\build\PrusaSlicer-${{ env.ver }}+win64-${{ env.date }}.zip resources *.exe *.dll mesa/opengl32.dll
+          7z l ${{ github.workspace }}\build\PrusaSlicer-${{ env.ver }}+win64-${{ env.date }}.zip
+        shell: pwsh
+
+      - name: Upload PrusaSlicer (BOSS) Portable
+        uses: actions/upload-artifact@v7
+        with:
+          name: PrusaSlicer-${{ env.ver }}+win64-${{ env.date }}
+          path: ${{ github.workspace }}\build\PrusaSlicer-${{ env.ver }}+win64-${{ env.date }}.zip
+
+      - name: Upload PrusaSlicer (BOSS) Installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: PrusaSlicer-Installer-${{ env.ver }}+win64-${{ env.date }}
+          path: ${{ github.workspace }}\build\PrusaSlicer-Installer-*.exe

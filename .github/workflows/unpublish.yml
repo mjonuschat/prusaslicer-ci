@@ -1,0 +1,49 @@
+# Update version information on GitHub Pages when a release is yanked
+name: Update Version Information on Unpublish
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          repository: mjonuschat/prusaslicer-ci
+          token: ${{ secrets.CI_REPO_TOKEN }}
+          path: .ci
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Create Version File
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p ${{ github.workspace }}/build
+          python3 ${{ github.workspace }}/.ci/.github/scripts/create_version.py build/PrusaSlicer.version
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: 'build'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
