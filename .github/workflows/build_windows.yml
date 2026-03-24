@@ -6,16 +6,23 @@ on:
 jobs:
   build_windows:
     name: Compile
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, X64]
+    environment: ${{ github.event_name == 'pull_request' && 'self-hosted-approval' || '' }}
     env:
       date:
       ver:
       ver_pure:
 
     steps:
+      - name: Clean build artifacts from previous runs
+        run: |
+          Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+        shell: pwsh
+
       - name: Disable Windows Defender real-time monitoring
         run: Set-MpPreference -DisableRealtimeMonitoring $true
         shell: pwsh
+        continue-on-error: true
 
       - name: Checkout
         uses: actions/checkout@v6
