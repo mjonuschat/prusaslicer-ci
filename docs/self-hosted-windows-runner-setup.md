@@ -47,8 +47,12 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocola
 ```
 
 ### Packages
+
+CMake is pinned to 3.31.6 and must be installed in a separate command — `--version=` applies to every package on the line, so combining causes the other 7 packages to fail.
+
 ```powershell
-choco install -y git cmake --version=3.31.6 ninja strawberryperl python3 innosetup pwsh 7zip gzip
+choco install -y cmake --version=3.31.6
+choco install -y git ninja strawberryperl python3 innosetup pwsh 7zip gzip
 ```
 
 > **CMake version:** Use 3.31.x, not 4.x. CMake 4.x removed compatibility with `cmake_minimum_required < 3.5`, breaking several dependencies.
@@ -91,6 +95,9 @@ while (Get-Process | Where-Object { $_.Name -match "setup|vs_" }) { Start-Sleep 
 ```
 
 Add ATL support (needed for `atlbase.h`):
+
+Invoke with the `&` call operator — `Start-Process -ArgumentList @(...)` does not quote args containing spaces, so `--installPath` silently truncates at `C:\Program` and the modify exits 1.
+
 ```powershell
 & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe" modify `
     --installPath "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools" `
