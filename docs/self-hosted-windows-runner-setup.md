@@ -52,12 +52,14 @@ CMake is pinned to 3.31.6 and must be installed in a separate command — `--ver
 
 ```powershell
 choco install -y cmake --version=3.31.6
-choco install -y git ninja strawberryperl python3 innosetup pwsh 7zip gzip
+choco install -y git ninja strawberryperl python3 innosetup pwsh 7zip gzip zstandard
 ```
 
 > **CMake version:** Use 3.31.x, not 4.x. CMake 4.x removed compatibility with `cmake_minimum_required < 3.5`, breaking several dependencies.
 
 > **Python 3** is required by the z3 dependency's configure step.
+
+> **zstandard** lets `actions/cache` use multi-threaded zstd (`zstd -T0 --long=30`) instead of falling back to single-threaded gzip. Detection is automatic: if `zstd` is on PATH, the cache action picks it up.
 
 ### CMake PATH Order
 
