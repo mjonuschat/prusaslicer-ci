@@ -1,5 +1,5 @@
-# Update version information on GitHub Pages when a release is yanked
-name: Update Version Information on Unpublish
+# Update version information on GitHub Pages after release lifecycle changes.
+name: Publish Version Information
 
 on:
   workflow_call:
