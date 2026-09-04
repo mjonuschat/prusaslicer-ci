@@ -81,19 +81,27 @@ jobs:
           echo cache-key=${{ runner.os }}-deps-${{ hashFiles('deps/**/CMakeLists.txt', 'deps/**/*.cmake', 'deps/**/*.patch') }} >> $ENV:GITHUB_OUTPUT
         shell: pwsh
 
-      - name: Cache build dependencies
-        id: cache-build-deps
-        uses: actions/cache@v5
+      - name: Restore build dependencies cache
+        id: cache-build-deps-restore
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.cache-path }}
           key: ${{ steps.cache-keys.outputs.cache-key }}
 
       - name: Build PrusaSlicer (BOSS) Dependencies
-        if: steps.cache-build-deps.outputs.cache-hit != 'true'
+        if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
         working-directory: ${{ github.workspace }}
         run: |
           cmake -P build.cmake -- --target deps
         shell: pwsh
+
+      - name: Save build dependencies cache
+        id: cache-build-deps-save
+        if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.cache-keys.outputs.cache-path }}
+          key: ${{ steps.cache-build-deps-restore.outputs.cache-primary-key }}
 
       - name: Build PrusaSlicer (BOSS)
         working-directory: ${{ github.workspace }}

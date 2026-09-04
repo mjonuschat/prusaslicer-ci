@@ -55,9 +55,9 @@ jobs:
           echo cache-path=${{ github.workspace }}/deps/build/destdir >> "$GITHUB_OUTPUT"
           echo cache-key=${{ runner.os }}_${{ matrix.arch }}-deps-${{ hashFiles('deps/**/CMakeLists.txt', 'deps/**/*.cmake', 'deps/**/*.patch') }} >> "$GITHUB_OUTPUT"
 
-      - name: Cache build dependencies
-        id: cache-build-deps
-        uses: actions/cache@v5
+      - name: Restore build dependencies cache
+        id: cache-build-deps-restore
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.cache-keys.outputs.cache-path }}
           key: ${{ steps.cache-keys.outputs.cache-key }}
@@ -76,10 +76,18 @@ jobs:
           brew uninstall --ignore-dependencies zstd || true
 
       - name: Build PrusaSlicer (BOSS) ${{ matrix.arch }} Dependencies
-        if: steps.cache-build-deps.outputs.cache-hit != 'true'
+        if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
         working-directory: ${{ github.workspace }}
         run: |
           cmake -P build.cmake -- --target deps --arch ${{ matrix.arch }}
+
+      - name: Save build dependencies cache
+        id: cache-build-deps-save
+        if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.cache-keys.outputs.cache-path }}
+          key: ${{ steps.cache-build-deps-restore.outputs.cache-primary-key }}
 
       - name: Install zstd
         if: always()
