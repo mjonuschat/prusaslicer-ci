@@ -117,7 +117,7 @@ jobs:
           copy slic3r-app-launcher\libmpfr-4.dll .
           copy slic3r-app-launcher\OCCTWrapper.dll .
           copy slic3r-app-launcher\WebView2Loader.dll .
-          New-Item -ItemType Junction -Path resources -Target slic3r-app-launcher\resources
+          New-Item -ItemType Junction -Path resources -Target "$PWD\slic3r-app-launcher\resources"
         shell: pwsh
 
       - name: Provide Mesa software OpenGL fallback
