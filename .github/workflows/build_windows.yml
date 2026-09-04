@@ -101,6 +101,17 @@ jobs:
           cmake -P build.cmake -- --target slicer
         shell: pwsh
 
+      - name: Stage launcher binary for packaging
+        working-directory: ${{ github.workspace }}/build/src
+        run: |
+          copy slic3r-app-launcher\slic3r-app-launcher.exe PrusaSlicer.exe
+          copy slic3r-app-launcher\libgmp-10.dll .
+          copy slic3r-app-launcher\libmpfr-4.dll .
+          copy slic3r-app-launcher\OCCTWrapper.dll .
+          copy slic3r-app-launcher\WebView2Loader.dll .
+          New-Item -ItemType Junction -Path resources -Target slic3r-app-launcher\resources
+        shell: pwsh
+
       - name: Provide Mesa software OpenGL fallback
         working-directory: ${{ github.workspace }}/build/src
         run: |

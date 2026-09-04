@@ -28,7 +28,7 @@ AppPublisherURL=https://github.com/mjonuschat/PrusaSlicer
 AppSupportURL=https://github.com/mjonuschat/PrusaSlicer/issues
 DefaultDirName={autopf}\PrusaSlicer+BOSS
 DefaultGroupName=PrusaSlicer+BOSS
-UninstallDisplayIcon={app}\prusa-slicer.exe
+UninstallDisplayIcon={app}\PrusaSlicer.exe
 OutputDir={#OutputDir}
 OutputBaseFilename=PrusaSlicer-Installer-{#Version}
 Compression=lzma2/ultra64
@@ -51,12 +51,11 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 
 [Files]
-; Main executables
-Source: "{#BuildDir}\prusa-slicer.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#BuildDir}\prusa-slicer-console.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#BuildDir}\prusa-gcodeviewer.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Main executable. 3.0 unified the GUI, CLI, and G-code viewer into one
+; binary (slic3r-app-launcher, staged here as PrusaSlicer.exe); the viewer
+; is a --gcodeviewer flag, not a separate executable.
+Source: "{#BuildDir}\PrusaSlicer.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; Shared libraries
-Source: "{#BuildDir}\PrusaSlicer.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\OCCTWrapper.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#BuildDir}\WebView2Loader.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#BuildDir}\libgmp-10.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
@@ -74,13 +73,13 @@ Source: "{#BuildDir}\resources\*"; DestDir: "{app}\resources"; Flags: ignorevers
 Source: "{#BuildDir}\..\..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\PrusaSlicer+BOSS"; Filename: "{app}\prusa-slicer.exe"
-Name: "{group}\PrusaSlicer+BOSS G-code Viewer"; Filename: "{app}\prusa-gcodeviewer.exe"
+Name: "{group}\PrusaSlicer+BOSS"; Filename: "{app}\PrusaSlicer.exe"
+Name: "{group}\PrusaSlicer+BOSS G-code Viewer"; Filename: "{app}\PrusaSlicer.exe"; Parameters: "--gcodeviewer"
 Name: "{group}\Uninstall PrusaSlicer+BOSS"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\PrusaSlicer+BOSS"; Filename: "{app}\prusa-slicer.exe"; Tasks: desktopicon
+Name: "{autodesktop}\PrusaSlicer+BOSS"; Filename: "{app}\PrusaSlicer.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Run]
-Filename: "{app}\prusa-slicer.exe"; Description: "{cm:LaunchProgram,PrusaSlicer+BOSS}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\PrusaSlicer.exe"; Description: "{cm:LaunchProgram,PrusaSlicer+BOSS}"; Flags: nowait postinstall skipifsilent
