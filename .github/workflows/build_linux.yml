@@ -25,6 +25,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # Full history: later step needs the last commit touching deps/.
+          fetch-depth: 0
 
       - name: Setup GitHub environment
         run: |
@@ -74,16 +77,34 @@ jobs:
       - name: Update the build source
         shell: bash
         run: |
+          # Pin to the last commit touching deps/, not HEAD -- HEAD changes
+          # every push and defeats flatpak-builder's per-module cache.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          deps_commit=$(git log -1 --format=%H -- deps/)
+          if [ -z "$deps_commit" ]; then
+            echo "::error::No commit found touching deps/; check fetch-depth"
+            exit 1
+          fi
+
           flatpak-builder --show-manifest .flatpak/io.github.mjonuschat.PrusaSlicer.yml | \
-            jq '.modules[] |= if .name == "PrusaSlicerDeps" or .name == "PrusaSlicer" then
-                (.sources[] |= if .type == "dir" and .path == ".." then
-                    {
-                        "type": "git",
-                        "url": "file://${{ env.GITHUB_WORKSPACE }}",
-                        "commit": "HEAD"
-                    }
-                else . end)
-            else . end' > .flatpak/io.github.mjonuschat.PrusaSlicer.json
+            jq --arg depsCommit "$deps_commit" \
+              '.modules[] |= if .name == "PrusaSlicerDeps" then
+                  (.sources[] |= if .type == "dir" and .path == ".." then
+                      {
+                          "type": "git",
+                          "url": "file://${{ env.GITHUB_WORKSPACE }}",
+                          "commit": $depsCommit
+                      }
+                  else . end)
+              elif .name == "PrusaSlicer" then
+                  (.sources[] |= if .type == "dir" and .path == ".." then
+                      {
+                          "type": "git",
+                          "url": "file://${{ env.GITHUB_WORKSPACE }}",
+                          "commit": "HEAD"
+                      }
+                  else . end)
+              else . end' > .flatpak/io.github.mjonuschat.PrusaSlicer.json
 
       - name: Build PrusaSlicer (BOSS) Linux Dependencies
         if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
