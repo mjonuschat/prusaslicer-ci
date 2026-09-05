@@ -117,13 +117,6 @@ jobs:
           arch: ${{ matrix.arch }}
           upload-artifact: false
 
-      - name: Save build dependencies cache
-        id: cache-build-deps-save
-        uses: actions/cache/save@v5
-        with:
-          path: ${{ steps.cache-keys.outputs.cache-path }}
-          key: ${{ steps.cache-build-deps-restore.outputs.cache-primary-key }}
-
       - name: Build PrusaSlicer (BOSS) Linux Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
@@ -132,6 +125,18 @@ jobs:
           cache: false
           arch: ${{ matrix.arch }}
           upload-artifact: false
+
+      # Runs after the full build, not between the two flatpak-builder
+      # invocations: PrusaSlicerDeps can be (re)built by either one --
+      # skipped here on a cache hit, built during the full app build
+      # otherwise -- and a save positioned before the full build would
+      # miss whichever one actually populated .flatpak-builder.
+      - name: Save build dependencies cache
+        id: cache-build-deps-save
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.cache-keys.outputs.cache-path }}
+          key: ${{ steps.cache-build-deps-restore.outputs.cache-primary-key }}
 
       - uses: actions/upload-artifact@v7
         with:
