@@ -25,9 +25,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          # Full history: later step needs the last commit touching deps/.
-          fetch-depth: 0
+
+      - name: Fetch full history for this ref only, without any tags
+        run: git fetch --no-tags --unshallow
 
       - name: Setup GitHub environment
         run: |
