@@ -27,7 +27,9 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Fetch full history for this ref only, without any tags
-        run: git fetch --no-tags --unshallow
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags --unshallow
 
       - name: Setup GitHub environment
         run: |
