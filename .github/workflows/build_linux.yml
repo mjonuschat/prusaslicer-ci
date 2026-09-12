@@ -95,7 +95,8 @@ jobs:
                       {
                           "type": "git",
                           "url": "file://${{ env.GITHUB_WORKSPACE }}",
-                          "commit": $depsCommit
+                          "commit": $depsCommit,
+                          "disable-lfs": true
                       }
                   else . end)
               elif .name == "PrusaSlicer" then
@@ -103,7 +104,8 @@ jobs:
                       {
                           "type": "git",
                           "url": "file://${{ env.GITHUB_WORKSPACE }}",
-                          "commit": "HEAD"
+                          "commit": "HEAD",
+                          "disable-lfs": true
                       }
                   else . end)
               else . end' > .flatpak/io.github.mjonuschat.PrusaSlicer.json
