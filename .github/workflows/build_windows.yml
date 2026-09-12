@@ -62,7 +62,7 @@ jobs:
           cmake-version: '3.31'
 
       - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: egor-tensin/vs-shell@v2
 
       - name: Install Strawberry Perl
         run: |
