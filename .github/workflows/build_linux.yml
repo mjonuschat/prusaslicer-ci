@@ -88,8 +88,14 @@ jobs:
             exit 1
           fi
 
+          # flatpak-builder can't resolve the literal string "HEAD" as a
+          # pathspec when checking out its clone of this source, failing
+          # with "pathspec 'HEAD' did not match any file(s) known to git".
+          # A resolved SHA works fine, so resolve it ourselves.
+          head_commit=$(git rev-parse HEAD)
+
           flatpak-builder --show-manifest .flatpak/io.github.mjonuschat.PrusaSlicer.yml | \
-            jq --arg depsCommit "$deps_commit" \
+            jq --arg depsCommit "$deps_commit" --arg headCommit "$head_commit" \
               '.modules[] |= if .name == "PrusaSlicerDeps" then
                   (.sources[] |= if .type == "dir" and .path == ".." then
                       {
@@ -104,7 +110,7 @@ jobs:
                       {
                           "type": "git",
                           "url": "file://${{ env.GITHUB_WORKSPACE }}",
-                          "commit": "HEAD",
+                          "commit": $headCommit,
                           "disable-lfs": true
                       }
                   else . end)
