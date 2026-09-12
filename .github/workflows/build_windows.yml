@@ -20,9 +20,13 @@ jobs:
         shell: pwsh
 
       - name: Disable Windows Defender real-time monitoring
-        run: Set-MpPreference -DisableRealtimeMonitoring $true
+        run: |
+          try {
+            Set-MpPreference -DisableRealtimeMonitoring $true
+          } catch {
+            Write-Host "Could not disable Windows Defender real-time monitoring: $_"
+          }
         shell: pwsh
-        continue-on-error: true
 
       - name: Checkout
         uses: actions/checkout@v6
