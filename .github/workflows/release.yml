@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: github.ref == 'refs/heads/boss' || github.ref == 'refs/heads/build/nightly'
+    if: github.ref == 'refs/heads/build/nightly'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -72,10 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ver_pure:
-      is_boss3: ${{ startsWith(github.ref, 'refs/heads/build/') && github.ref != 'refs/heads/build/nightly' }}
     permissions:
       contents: write
-    if: startsWith(github.ref, 'refs/heads/release/') || (startsWith(github.ref, 'refs/heads/build/') && github.ref != 'refs/heads/build/nightly')
+    if: startsWith(github.ref, 'refs/heads/build/') && github.ref != 'refs/heads/build/nightly'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -91,15 +90,11 @@ jobs:
 
       - name: Get PrusaSlicer Version
         run: |
-          if [[ "${{ env.is_boss3 }}" == "true" ]]; then
-            # BOSS 3.0 build/<version> branches name the release version
-            # themselves (via compose.py's --version); version.inc still
-            # carries upstream's own baked-in version, not BOSS's release
-            # number, so it is not the source of truth here.
-            ver_pure="${GITHUB_REF#refs/heads/build/}"
-          else
-            ver_pure=$(grep 'set(SLIC3R_VERSION' version.inc | cut -d '"' -f2)
-          fi
+          # BOSS 3.0 build/<version> branches name the release version
+          # themselves (via compose.py's --version); version.inc still
+          # carries upstream's own baked-in version, not BOSS's release
+          # number, so it is not the source of truth here.
+          ver_pure="${GITHUB_REF#refs/heads/build/}"
           echo "ver_pure=$ver_pure" >> $GITHUB_ENV
 
       - name: Download PrusaSlicer (BOSS) Build Artifacts
