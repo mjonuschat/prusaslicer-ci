@@ -110,7 +110,7 @@ jobs:
       - name: Build PrusaSlicer (BOSS)
         working-directory: ${{ github.workspace }}
         run: |
-          cmake -P build.cmake -- --target slicer
+          cmake -P build.cmake -- --target slicer ${{ startsWith(github.ref, 'refs/heads/build/') && '--no-tests' || '' }}
         shell: pwsh
 
       - name: Stage launcher binary for packaging

@@ -97,7 +97,7 @@ jobs:
       - name: Build PrusaSlicer (BOSS) ${{ matrix.arch }}
         working-directory: ${{ github.workspace }}
         run: |
-          cmake -P build.cmake -- --target install --arch ${{ matrix.arch }}
+          cmake -P build.cmake -- --target install --arch ${{ matrix.arch }} ${{ startsWith(github.ref, 'refs/heads/build/') && '--no-tests' || '' }}
 
       - name: Bundle PrusaSlicer (BOSS) ${{ matrix.arch }} release build
         if: (github.ref == 'refs/heads/boss' || startsWith(github.ref, 'refs/heads/release/'))
