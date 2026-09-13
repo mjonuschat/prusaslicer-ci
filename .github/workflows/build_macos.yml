@@ -10,9 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
+          - os: macos-latest
             arch: x86_64
-          - os: macos-15
+          - os: macos-latest
             arch: arm64
     runs-on: ${{ matrix.os }}
     env:
@@ -140,7 +140,7 @@ jobs:
 
   bundle_macos:
     name: Bundle DMG
-    runs-on: macos-15
+    runs-on: macos-latest
     needs: [build_macos]
     env:
       date: ""
