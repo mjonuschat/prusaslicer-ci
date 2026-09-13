@@ -100,7 +100,7 @@ jobs:
           cmake -P build.cmake -- --target install --arch ${{ matrix.arch }} ${{ startsWith(github.ref, 'refs/heads/build/') && '--no-tests' || '' }}
 
       - name: Bundle PrusaSlicer (BOSS) ${{ matrix.arch }} release build
-        if: (github.ref == 'refs/heads/boss' || startsWith(github.ref, 'refs/heads/release/'))
+        if: (github.ref == 'refs/heads/boss' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/build/'))
         working-directory: ${{ github.workspace }}
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
@@ -126,7 +126,7 @@ jobs:
           xcrun stapler staple PrusaSlicer-${{ env.ver }}+MacOS-${{matrix.arch}}-${{ env.date }}.dmg
 
       - name: Bundle PrusaSlicer (BOSS) ${{ matrix.arch }} development build
-        if: (github.ref != 'refs/heads/boss' && !startsWith(github.ref, 'refs/heads/release/'))
+        if: (github.ref != 'refs/heads/boss' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/heads/build/'))
         working-directory: ${{ github.workspace }}
         run: |
           ln -s /Applications ${{ github.workspace }}/build/PrusaSlicer/bin/Applications
@@ -203,7 +203,7 @@ jobs:
           echo "DMG_UNIVERSAL=$(ls ${GITHUB_WORKSPACE}/artifacts/PrusaSlicer*+MacOS-universal*.dmg|head -n1)" >> $GITHUB_ENV
 
       - name: Sign MacOS PrusaSlicer (BOSS) Universal Binary
-        if: (github.ref == 'refs/heads/boss' || startsWith(github.ref, 'refs/heads/release/'))
+        if: (github.ref == 'refs/heads/boss' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/build/'))
         working-directory: ${{ github.workspace }}
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
