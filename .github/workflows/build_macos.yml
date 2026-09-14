@@ -51,6 +51,23 @@ jobs:
         with:
           cmake-version: '3.31'
 
+      - name: Install dependencies
+        run: |
+          brew install automake git gettext libtool texinfo m4 zlib
+
+      - name: Select Xcode Version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode-version }}
+
+      # actions/cache builds its entry version from the cached path and
+      # the compression tool on the runner. Restore and save must see the
+      # same zstd state. If they do not, save writes a gzip entry that no
+      # restore can find.
+      - name: Uninstall zstd
+        run: |
+          brew uninstall --ignore-dependencies zstd || true
+
       - name: Determine Cache Keys
         id: cache-keys
         run: |
@@ -63,19 +80,6 @@ jobs:
         with:
           path: ${{ steps.cache-keys.outputs.cache-path }}
           key: ${{ steps.cache-keys.outputs.cache-key }}
-
-      - name: Install dependencies
-        run: |
-          brew install automake git gettext libtool texinfo m4 zlib
-
-      - name: Select Xcode Version
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ matrix.xcode-version }}
-
-      - name: Uninstall zstd
-        run: |
-          brew uninstall --ignore-dependencies zstd || true
 
       - name: Build PrusaSlicer (BOSS) ${{ matrix.arch }} Dependencies
         if: steps.cache-build-deps-restore.outputs.cache-hit != 'true'
