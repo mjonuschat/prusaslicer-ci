@@ -13,9 +13,9 @@ jobs:
           - os: macos-15
             arch: x86_64
             xcode-version: '16.4'
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
-            xcode-version: '26.6'
+            xcode-version: '16.4'
     runs-on: ${{ matrix.os }}
     env:
       date: ""
@@ -142,7 +142,7 @@ jobs:
 
   bundle_macos:
     name: Bundle DMG
-    runs-on: macos-latest
+    runs-on: macos-15
     needs: [build_macos]
     env:
       date: ""
