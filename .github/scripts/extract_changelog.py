@@ -35,6 +35,27 @@ def _has_content(body: str) -> bool:
     return False
 
 
+def _is_level3_heading(line: str) -> bool:
+    return line.startswith("### ") and not line.startswith("#### ")
+
+
+def _drop_empty_subsections(body: str) -> str:
+    """Removes '### ' subheadings (e.g. Added/Changed/Fixed) that have no
+    content before the next '### ' heading or the end of the section."""
+    lines = body.splitlines(keepends=True)
+    heading_indices = [i for i, line in enumerate(lines) if _is_level3_heading(line)]
+    if not heading_indices:
+        return body
+
+    kept = lines[: heading_indices[0]]
+    for pos, start in enumerate(heading_indices):
+        end = heading_indices[pos + 1] if pos + 1 < len(heading_indices) else len(lines)
+        section = lines[start:end]
+        if "".join(section[1:]).strip():
+            kept.extend(section)
+    return "".join(kept).strip("\n")
+
+
 def extract_unreleased(text: str) -> str:
     lines = text.splitlines(keepends=True)
     heading_idx = _find_unreleased_index(lines)
@@ -42,7 +63,7 @@ def extract_unreleased(text: str) -> str:
     body = "".join(lines[heading_idx + 1 : end_idx]).strip("\n")
     if not _has_content(body):
         raise ValueError(f"{UNRELEASED_HEADING!r} section is empty")
-    return body + "\n"
+    return _drop_empty_subsections(body) + "\n"
 
 
 def bump_unreleased(text: str, version: str, date: str) -> str:

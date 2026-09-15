@@ -59,6 +59,24 @@ class ExtractUnreleasedTests(unittest.TestCase):
         body = extract_changelog.extract_unreleased(text)
         self.assertIn("- Only entry.", body)
 
+    def test_drops_empty_subheadings(self):
+        body = extract_changelog.extract_unreleased(SAMPLE)
+        self.assertNotIn("### Changed", body)
+        self.assertIn("### Added", body)
+        self.assertIn("### Fixed", body)
+        self.assertIn("### Ported", body)
+
+    def test_keeps_subheading_with_only_nested_content(self):
+        text = (
+            "# Changelog\n\n## Unreleased\n\n### Added\n\n### Ported\n\n"
+            "#### Infill\n\n- Ported a feature.\n\n## 1.0.0 - 2026-01-01\n"
+        )
+        body = extract_changelog.extract_unreleased(text)
+        self.assertNotIn("### Added", body)
+        self.assertIn("### Ported", body)
+        self.assertIn("#### Infill", body)
+        self.assertIn("- Ported a feature.", body)
+
 
 class BumpUnreleasedTests(unittest.TestCase):
     def test_renames_heading_to_versioned_section(self):
